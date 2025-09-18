@@ -31,52 +31,49 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-50 to-white p-6">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div className="p-6 text-center">
-          <h1 className="text-2xl font-extrabold text-slate-800">Iniciar sesión</h1>
-          <p className="text-sm text-slate-500 mt-1">Ingresa con tu correo y contraseña.</p>
-        </div>
-
-        <form onSubmit={onSubmit} className="p-6 space-y-4">
-          {error && <div className="text-sm text-red-700 bg-red-50 p-2 rounded">{error}</div>}
-
-          <label className="block">
-            <span className="text-sm text-slate-700">Email</span>
-            <input
-              name="email"
-              value={form.email}
-              onChange={onChange}
-              type="email"
-              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              placeholder="correo@ejemplo.com"
-            />
-          </label>
-
-          <label className="block">
-            <span className="text-sm text-slate-700">Contraseña</span>
-            <input
-              name="password"
-              value={form.password}
-              onChange={onChange}
-              type="password"
-              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              placeholder="Tu contraseña"
-            />
-          </label>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-sky-600 text-white px-4 py-2 font-semibold hover:bg-sky-700 disabled:opacity-60"
-          >
-            {loading ? "Validando..." : "Entrar"}
-          </button>
-
-          <div className="text-center text-sm text-slate-500">
-            ¿No tienes cuenta? <a className="text-indigo-600 hover:underline" href="/register">Regístrate</a>
+    <main className="min-h-screen flex items-center justify-center p-6">
+      <div className="container-center">
+        <div className="card">
+          <div className="card-header">
+            <div className="form-wrap">
+              <h1 className="page-title">Iniciar sesión</h1>
+              <p className="lead">Accede a tu cuenta para ver y administrar tus proyectos.</p>
+            </div>
           </div>
-        </form>
+
+          <div className="card-body">
+            <div className="form-wrap">
+              {error && <div className="text-sm text-red-700 bg-red-50 p-2 rounded mb-3">{error}</div>}
+
+              <form onSubmit={onSubmit} className="space-y-3">
+                <div className="form-row">
+                  <label className="block">
+                    <div className="text-sm text-[var(--muted)] mb-1">Email</div>
+                    <input name="email" value={form.email} onChange={onChange} type="email" placeholder="correo@ejemplo.com" className="input" />
+                  </label>
+                </div>
+
+                <div className="form-row">
+                  <label className="block">
+                    <div className="text-sm text-[var(--muted)] mb-1">Contraseña</div>
+                    <input name="password" value={form.password} onChange={onChange} type="password" placeholder="Tu contraseña" className="input" />
+                  </label>
+                </div>
+
+                <div className="form-row">
+                  <button type="submit" disabled={loading} className="btn btn-primary w-full">
+                    {loading ? "Validando..." : "Entrar"}
+                  </button>
+                </div>
+
+                <div className="form-row text-center">
+                  <a className="link" href="/register">¿No tienes cuenta? Regístrate</a>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   );

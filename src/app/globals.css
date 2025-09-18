@@ -1,30 +1,182 @@
-/* styles/globals.css */
 /* src/app/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
+/* Paleta principal (azules y grises claros) */
+:root{
+  --bg-100: #f1f5f9;      /* fondo general muy claro (gris-azulado) */
+  --bg-200: #e2eef8;      /* leve tono azul claro para gradiente */
+  --surface: #ffffff;     /* tarjetas y cajas */
+  --muted: #64748b;       /* textos secundarios - slate */
+  --text: #0f172a;        /* texto principal (azul muy oscuro casi negro) */
+  --primary: #0369a1;     /* azul principal (para botones) */
+  --primary-600: #0284c7; /* hover color */
+  --accent: #7dd3fc;      /* accent claro */
+  --shadow: 0 6px 20px rgba(3, 105, 161, 0.08);
+  --radius-lg: 14px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Fondo con leve gradiente */
 html, body, #__next {
   height: 100%;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
+body{
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--text);
+  background: linear-gradient(180deg, var(--bg-200) 0%, var(--bg-100) 100%);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* Contenedor central reutilizable para formularios/páginas */
+.container-center {
+  width: 100%;
+  max-width: 880px; /* ancho máximo general para páginas */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* Tarjeta (card) para encerrar formularios e información */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  border: 1px solid rgba(2,6,23,0.04);
+}
+
+/* Card header */
+.card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(2,6,23,0.04);
+  background: linear-gradient(90deg, rgba(3,105,161,0.03), rgba(125,211,252,0.03));
+}
+
+/* Card body */
+.card-body {
+  padding: 1.25rem 1.5rem;
+}
+
+/* Form inner wrapper para centrar y controlar ancho del formulario */
+.form-wrap {
+  width: 100%;
+  max-width: 520px; /* ancho de la caja de formulario */
+  margin: 0 auto;
+}
+
+/* Estilos base para inputs/selects/textarea */
+.input, select, textarea {
+  width: 100%;
+  padding: .625rem .75rem; /* 10px 12px */
+  border-radius: 8px;
+  border: 1px solid rgba(15,23,42,0.08);
+  background: #fff;
+  color: var(--text);
+  font-size: 0.95rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: box-shadow .15s ease, border-color .15s ease, transform .05s ease;
+}
+
+.input::placeholder {
+  color: rgba(15,23,42,0.4);
+}
+
+/* focus */
+.input:focus, select:focus, textarea:focus {
+  border-color: var(--primary-600);
+  box-shadow: 0 4px 14px rgba(2,132,199,0.12);
+  transform: translateY(-1px);
+}
+
+/* Select específico */
+select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+                    linear-gradient(135deg, var(--muted) 50%, transparent 50%),
+                    linear-gradient(to right, rgba(0,0,0,0.02), rgba(0,0,0,0.02));
+  background-position: calc(100% - 18px) calc(1rem), calc(100% - 13px) calc(1rem), 100% 0;
+  background-size: 6px 6px, 6px 6px, 1px 100%;
+  background-repeat: no-repeat;
+  padding-right: 2.25rem; /* espacio para la flecha */
+}
+
+/* Botones */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .6rem .9rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: .95rem;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--primary) 0%, var(--primary-600) 100%);
+  color: white;
+  box-shadow: 0 8px 24px rgba(3,105,161,0.12);
+}
+
+.btn-primary:hover { transform: translateY(-2px); }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(2,6,23,0.06);
+  color: var(--text);
+}
+
+/* Pequeños utilitarios para títulos y textos */
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text);
   margin: 0;
 }
+
+.lead {
+  color: var(--muted);
+  font-size: .95rem;
+}
+
+/* Layout para dashboard: columnas y cards */
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 1024px) {
+  .grid-3 {
+    grid-template-columns: 320px 1fr;
+  }
+}
+
+/* ajustes para listas de proyectos */
+.project-item {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: .75rem;
+  padding: .75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(2,6,23,0.04);
+}
+
+/* formulario: separación entre campos */
+.form-row { margin-top: .65rem; }
+
+/* pequeño estilo para enlaces */
+a.link {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+a.link:hover { text-decoration: underline; }
