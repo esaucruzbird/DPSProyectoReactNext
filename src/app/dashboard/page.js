@@ -13,9 +13,12 @@ import {
   mockDeleteTask,
   mockProjectDaysInfo,
   mockListUsers,
+  daysBetweenInclusive,
 } from "@/lib/mockApi";
 
 //import { mockGetProjects, mockCreateProject, mockDeleteProject } from "@/lib/mockApi";
+
+const STATUS_OPTIONS = ["Nuevo", "En curso", "Cerrado", "Completado"];
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
@@ -25,7 +28,7 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState([]);
   const [expandedProjectId, setExpandedProjectId] = useState(null);
 
-  // Estado para crear/editar proyecto (solo gerente)
+  // Proyecto create/edit (solo gerente)
   const [projForm, setProjForm] = useState({
     id: null,
     title: "",
@@ -35,14 +38,15 @@ export default function DashboardPage() {
   });
   const [projError, setProjError] = useState("");
 
-  // estados para task create/edit dentro del proyecto expandido
+  // Task create/edit
   const [taskForm, setTaskForm] = useState({
     id: null,
     name: "",
     description: "",
     assignedDays: 0,
     assignedTo: null,
-    status: "pendiente",
+    status: STATUS_OPTIONS[0],
+    projectId: null,
   });
   const [taskError, setTaskError] = useState("");
 
@@ -51,15 +55,17 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!loaded) return;
     setProjects(mockGetProjects());
-    setUsersList(mockListUsers());
+    setUsersList(mockListUsers()); // ahora devuelve solo usuarios
   }, [loaded]);
 
-  // Helpers
   function refresh() {
     setProjects(mockGetProjects());
   }
 
-  // PROJECTS CRUD ------------------------------------------------------------
+  // Seguridad: userId protegido
+  const userId = user?.id ?? null;
+
+  // PROJECT CRUD -------------------------------------------------------------
   const handleCreateProject = () => {
     setProjError("");
     try {
@@ -114,7 +120,15 @@ export default function DashboardPage() {
   // TASKS CRUD ---------------------------------------------------------------
   const openNewTaskFor = (projectId) => {
     setTaskError("");
-    setTaskForm({ id: null, name: "", description: "", assignedDays: 0, assignedTo: null, status: "pendiente", projectId });
+    setTaskForm({
+      id: null,
+      name: "",
+      description: "",
+      assignedDays: 0,
+      assignedTo: null,
+      status: STATUS_OPTIONS[0],
+      projectId,
+    });
     setExpandedProjectId(projectId);
   };
 
@@ -126,7 +140,7 @@ export default function DashboardPage() {
       description: task.description,
       assignedDays: task.assignedDays,
       assignedTo: task.assignedTo,
-      status: task.status,
+      status: task.status || STATUS_OPTIONS[0],
       projectId,
     });
     setExpandedProjectId(projectId);
@@ -154,7 +168,7 @@ export default function DashboardPage() {
           status: taskForm.status,
         });
       }
-      setTaskForm({ id: null, name: "", description: "", assignedDays: 0, assignedTo: null, status: "pendiente", projectId: null });
+      setTaskForm({ id: null, name: "", description: "", assignedDays: 0, assignedTo: null, status: STATUS_OPTIONS[0], projectId: null });
       refresh();
     } catch (err) {
       setTaskError(err.message || "Error guardando tarea");
@@ -167,17 +181,15 @@ export default function DashboardPage() {
     refresh();
   };
 
-  // UI render helpers --------------------------------------------------------
   if (!loaded) return null;
 
-  // Seguridad: si user es null, userId será null y evitamos leer .id directamente
-  const userId = user?.id ?? null;
-
-  // Filtrado para rol usuario: ver sólo proyectos donde tiene alguna tarea asignada
-  const visibleProjects = user?.role === "gerente"
-    ? projects
-    : (userId ? projects.filter((p) => (p.tasks || []).some((t) => t.assignedTo === userId)) : []);
-    //: projects.filter((p) => (p.tasks || []).some((t) => t.assignedTo === user.id));
+  // Filtrado proyectos visibles para usuario (si no gerente)
+  const visibleProjects =
+    user?.role === "gerente"
+      ? projects
+      : userId
+      ? projects.filter((p) => (p.tasks || []).some((t) => t.assignedTo === userId))
+      : [];
 
   return (
     <div className="min-h-screen p-8">
@@ -245,23 +257,41 @@ export default function DashboardPage() {
 
           {visibleProjects.map((p) => {
             const daysInfo = mockProjectDaysInfo(p);
+            const available = daysInfo.available;
+            // completedDays: suma de assignedDays de tareas con estado 'Completado'
+            const completedDays = (p.tasks || []).filter(t => String(t.status) === "Completado")
+              .reduce((s, t) => s + Number(t.assignedDays || 0), 0);
+            const percent = available > 0 ? Math.round((completedDays / available) * 100) : 0;
+            const safePercent = Math.max(0, Math.min(100, percent));
+
             return (
               <div key={p.id} className="card">
-                <div className="card-header form-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem" }}>
-                  <div>
+                <div className="card-header form-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+                  <div style={{ flex: "1 1 0" }}>
                     <div style={{ fontWeight: 700 }}>{p.title}</div>
                     <div className="text-sm text-[var(--muted)]">{p.description}</div>
                     <div className="text-sm text-[var(--muted)] mt-1">
-                      {p.startDate} → {p.endDate} · Disponibles: {daysInfo.available}d · Ocupados: {daysInfo.used}d
+                      {p.startDate} → {p.endDate} · Disponibles: {available}d · Ocupados: {daysInfo.used}d
                     </div>
+
+                    {/* Barra de progreso */}
+                    <div style={{ marginTop: 8, width: "100%", background: "rgba(2,6,23,0.04)", borderRadius: 8, height: 12 }}>
+                      <div style={{
+                        width: `${safePercent}%`,
+                        height: "100%",
+                        background: "linear-gradient(90deg, var(--primary), var(--primary-600))",
+                        borderRadius: 8,
+                        transition: "width .3s ease"
+                      }} />
+                    </div>
+                    <div className="text-sm text-[var(--muted)] mt-1">Progreso: {safePercent}% ({completedDays}d de {available}d)</div>
                   </div>
 
-                  <div style={{ display: "flex", gap: ".5rem" }}>
+                  <div style={{ display: "flex", gap: ".5rem", alignItems: "center" }}>
                     <button className="btn btn-ghost" onClick={() => { setExpandedProjectId(expandedProjectId === p.id ? null : p.id); }}>
                       {expandedProjectId === p.id ? "Cerrar" : "Abrir"}
                     </button>
 
-                    {/* acciones gerente */}
                     {user?.role === "gerente" && (
                       <>
                         <button className="btn btn-ghost" onClick={() => openEditProject(p)}>Editar</button>
@@ -276,7 +306,7 @@ export default function DashboardPage() {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem" }}>
                       <h4 className="font-semibold">Tareas</h4>
                       <div style={{ display: "flex", gap: ".5rem" }}>
-                        {/* Nuevo: si gerente puede crear tarea, si usuario sólo puede crear si está asignado? aquí solo gerente crea */}
+                        {/* Gerente puede crear tareas */}
                         {user?.role === "gerente" && (
                           <button className="btn btn-primary" onClick={() => openNewTaskFor(p.id)}>Nueva tarea</button>
                         )}
@@ -288,9 +318,7 @@ export default function DashboardPage() {
 
                       {(p.tasks || []).map((t) => {
                         const assignedToName = usersList.find(u => u.id === t.assignedTo)?.name || "No asignado";
-                        //const canEditTask = user?.role === "gerente" || t.assignedTo === user.id;
                         const canEditTask = user?.role === "gerente" || t.assignedTo === userId;
-                        //const userIsAssignedHere = t.assignedTo === user.id;
                         const userIsAssignedHere = t.assignedTo === userId;
                         return (
                           <div key={t.id} className="project-item">
@@ -301,13 +329,11 @@ export default function DashboardPage() {
                               <div className="text-sm text-[var(--muted)]">Estado: <strong>{t.status}</strong></div>
                             </div>
 
-                            <div style={{ display: "flex", flexDirection: "column", gap: ".5rem" }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: ".5rem", minWidth: 160 }}>
                               {/* Si usuario asignado, permite cambiar estado (solo su tarea) */}
                               {user?.role === "usuario" && userIsAssignedHere && (
                                 <select className="input" value={t.status} onChange={(e)=>{ mockUpdateTask(p.id, t.id, { status: e.target.value }); refresh(); }}>
-                                  <option value="pendiente">pendiente</option>
-                                  <option value="en_progreso">en_progreso</option>
-                                  <option value="completada">completada</option>
+                                  {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
                               )}
 
@@ -343,14 +369,12 @@ export default function DashboardPage() {
 
                           <div style={{ display: "flex", gap: ".5rem", marginTop: ".5rem" }}>
                             <select className="input" value={taskForm.status} onChange={(e)=>setTaskForm({...taskForm,status:e.target.value})}>
-                              <option value="pendiente">pendiente</option>
-                              <option value="en_progreso">en_progreso</option>
-                              <option value="completada">completada</option>
+                              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
 
                             <div style={{ flex: 1, display: "flex", gap: ".5rem" }}>
                               <button className="btn btn-primary" onClick={handleSaveTask}>{taskForm.id ? "Actualizar tarea" : "Crear tarea"}</button>
-                              <button className="btn btn-ghost" onClick={() => setTaskForm({ id: null, name: "", description: "", assignedDays: 0, assignedTo: null, status: "pendiente", projectId: null })}>Cancelar</button>
+                              <button className="btn btn-ghost" onClick={() => setTaskForm({ id: null, name: "", description: "", assignedDays: 0, assignedTo: null, status: STATUS_OPTIONS[0], projectId: null })}>Cancelar</button>
                             </div>
                           </div>
                         </div>
@@ -367,6 +391,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-
-

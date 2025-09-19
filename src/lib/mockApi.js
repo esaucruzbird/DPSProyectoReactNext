@@ -253,9 +253,15 @@ export function mockDeleteTask(projectId, taskId) {
 }
 
 // Usuarios utilidad (para asignar tareas desde UI)
+// retorna solo usuarios con role === 'usuario'
 export function mockListUsers() {
   // lee users guardados por el AuthContext
   const u = getUsersRaw();
+  // filtra solo role 'usuario' y map a id, name, email
+  return (u || [])
+    .filter((x) => x.role === "usuario")
+    .map((x) => ({ id: x.id, name: x.name, email: x.email }));
+
   // map a id, name, email
-  return (u || []).map((x) => ({ id: x.id, name: x.name, email: x.email }));
+  //return (u || []).map((x) => ({ id: x.id, name: x.name, email: x.email }));
 }
