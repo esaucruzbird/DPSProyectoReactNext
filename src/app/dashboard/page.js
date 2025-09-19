@@ -63,7 +63,7 @@ export default function DashboardPage() {
 
   const userId = user?.id ?? null;
 
-  // Create / Update / Delete project & tasks (igual lógica que antes)
+  // PROJECT CRUD -------------------------------------------------------------
   const handleCreateProject = () => {
     setProjError('');
     try {
@@ -118,7 +118,7 @@ export default function DashboardPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Tasks
+  // TASKS CRUD ---------------------------------------------------------------
   const openNewTaskFor = (projectId) => {
     setTaskError('');
     setTaskForm({ id: null, name: '', description: '', assignedDays: 0, assignedTo: null, status: STATUS_OPTIONS[0], projectId });
@@ -189,10 +189,11 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen p-8">
+      {/* TOASTS */}
       <div className="toast-wrap" aria-live="polite">
         {toasts.map((t) => (
           <div key={t.id} className={`toast ${t.type === 'success' ? 'toast-success' : 'toast-error'}`}>
-            {t.message}
+            <div>{t.message}</div>
           </div>
         ))}
       </div>
@@ -219,6 +220,7 @@ export default function DashboardPage() {
           </div>
         </header>
 
+        {/* PROYECTO: formulario crear/editar (solo gerente) */}
         {user?.role === 'gerente' && (
           <div className="card project-card mb-6">
             <div className="card-header form-wrap">
@@ -242,6 +244,7 @@ export default function DashboardPage() {
 
             <div className="card-body form-wrap">
               {projError && <div className="text-sm text-red-700 bg-red-50 p-2 rounded mb-3">{projError}</div>}
+
               <div className="grid" style={{ gap: '0.75rem' }}>
                 <input
                   placeholder="Título"
@@ -292,6 +295,7 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* LISTADO DE PROYECTOS */}
         <div className="space-y-4">
           {visibleProjects.length === 0 ? <div className="text-sm text-[var(--muted)]">No hay proyectos visibles.</div> : null}
 
@@ -318,17 +322,19 @@ export default function DashboardPage() {
                       {p.startDate} → {p.endDate} · Disponibles: {available}d · Ocupados: {daysInfo.used}d
                     </div>
 
-                    <div style={{ marginTop: 8, width: '100%', background: 'rgba(2,6,23,0.04)', borderRadius: 8, height: 12 }}>
+                    {/* BARRA DE PROGRESO: pista + fill, usando variables CSS existentes (blue-600/700) */}
+                    <div style={{ marginTop: 8, width: '100%', background: 'rgba(2,6,23,0.06)', borderRadius: 8, height: 12 }}>
                       <div
                         style={{
                           width: `${safePercent}%`,
                           height: '100%',
-                          background: 'linear-gradient(90deg, var(--primary), var(--primary-600))',
+                          background: 'linear-gradient(90deg, var(--blue-600), var(--blue-700))',
                           borderRadius: 8,
                           transition: 'width .3s ease',
                         }}
                       />
                     </div>
+
                     <div className="text-sm text-[var(--muted)] mt-1">
                       Progreso: {safePercent}% ({completedDays}d de {available}d)
                     </div>
@@ -365,7 +371,7 @@ export default function DashboardPage() {
                         {user?.role === 'gerente' && (
                           <>
                             <button
-                              className="btn btn-primary"
+                              className="btn btn-primary btn-fixed"
                               onClick={() => openNewTaskFor(p.id)}
                               disabled={remaining <= 0}
                               title={remaining <= 0 ? 'No quedan días disponibles en este proyecto' : 'Crear nueva tarea'}
@@ -405,7 +411,7 @@ export default function DashboardPage() {
                               </div>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem', minWidth: 160 }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem', alignItems: 'flex-end', minWidth: 120 }}>
                               {user?.role === 'usuario' && userIsAssignedHere && (
                                 <select
                                   className="input"
@@ -426,11 +432,10 @@ export default function DashboardPage() {
 
                               {user?.role === 'gerente' && (
                                 <>
-                                  {/* botones más pequeños en las tareas (btn-sm) para consistencia visual */}
-                                  <button className="btn btn-sm btn-edit" onClick={() => openEditTask(p.id, t)}>
+                                  <button className="btn btn-sm btn-edit btn-fixed" onClick={() => openEditTask(p.id, t)}>
                                     Editar
                                   </button>
-                                  <button className="btn btn-sm btn-delete" onClick={() => handleDeleteTask(p.id, t.id)}>
+                                  <button className="btn btn-sm btn-delete btn-fixed" onClick={() => handleDeleteTask(p.id, t.id)}>
                                     Eliminar
                                   </button>
                                 </>

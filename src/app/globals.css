@@ -174,12 +174,30 @@ textarea:focus {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
+/* ancho fijo para botones que deben coincidir con "Nueva tarea" */
+.btn-fixed {
+  width: 120px;        /* ancho fijo: ajusta a tu gusto (120px funciona bien) */
+  text-align: center;
+}
+
 /* Small button variant (para los botones dentro de tareas) */
 .btn-sm {
-  padding: 0.35rem 0.5rem;
-  font-size: 0.85rem;
+  padding: .35rem .5rem;
+  font-size: .85rem;
   border-radius: 8px;
-  gap: 0.35rem;
+  gap: .35rem;
+  width: 120px;        /* manteniendo el mismo ancho para consistencia */
+}
+
+/* asegurando que dentro de task-card los botones no ocupen 100% por defecto */
+.task-card .btn,
+.task-card .btn-sm {
+  width: auto; /* por defecto no forzar 100% */
+}
+
+/* cuando se usa .btn-fixed combinada con .btn-sm, se fija el ancho */
+.task-card .btn-fixed {
+  width: 120px;
 }
 
 /* utilitarios */
