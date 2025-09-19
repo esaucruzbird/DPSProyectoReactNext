@@ -6,7 +6,7 @@
 /* Paleta principal (azules y grises claros) */
 :root{
   --bg-100: #f1f5f9;      /* fondo general muy claro (gris-azulado) */
-  --bg-200: #e2eef8;      /* leve tono azul claro para gradiente */
+  --bg-200: #eaf6ff;      /* leve tono azul claro para background */
   --surface: #ffffff;     /* tarjetas y cajas */
   --muted: #64748b;       /* textos secundarios - slate */
   --text: #0f172a;        /* texto principal (azul muy oscuro casi negro) */
@@ -50,11 +50,11 @@ body{
   border: 1px solid rgba(2,6,23,0.04);
 }
 
-/* Card header */
+/* Card header - cambiado a fondo sólido (ya no tiene degradado) */
 .card-header {
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid rgba(2,6,23,0.04);
-  background: linear-gradient(90deg, rgba(3,105,161,0.03), rgba(125,211,252,0.03));
+  background: rgba(3,105,161,0.04); /* tono azuloso muy claro y sólido */
 }
 
 /* Card body */
@@ -118,6 +118,13 @@ select {
   cursor: pointer;
   font-weight: 600;
   font-size: .95rem;
+  transition: transform .12s ease, opacity .12s ease;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
 }
 
 .btn-primary {
@@ -180,3 +187,59 @@ a.link {
   text-decoration: none;
 }
 a.link:hover { text-decoration: underline; }
+
+/* ---------- BADGES (estados) ---------- */
+.badge {
+  display:inline-flex;
+  align-items:center;
+  gap:.5rem;
+  padding:.25rem .5rem;
+  border-radius:999px;
+  font-weight:700;
+  font-size:0.8rem;
+  color: white;
+}
+
+.badge-new { background: #94a3b8; }       /* gris */
+.badge-progress { background: #f59e0b; }  /* amarillo */
+.badge-closed { background: #ef4444; }    /* rojo */
+.badge-done { background: #10b981; }      /* verde */
+
+/* ---------- TOASTS (notificaciones) ---------- */
+.toast-wrap {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  min-width: 220px;
+  max-width: 420px;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(2,6,23,0.08);
+  color: white;
+  font-weight: 600;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.toast-success { background: linear-gradient(90deg,#16a34a,#10b981); }
+.toast-error { background: linear-gradient(90deg,#ef4444,#f97316); }
+
+/* advertencia inline (cuando no quedan días) */
+.warn {
+  color: #b45309;
+  background: #fff7ed;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(184, 79, 0, 0.08);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+

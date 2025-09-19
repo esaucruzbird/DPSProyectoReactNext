@@ -52,14 +52,26 @@ export default function DashboardPage() {
 
   const [usersList, setUsersList] = useState([]);
 
+  // Toasts
+  const [toasts, setToasts] = useState([]);
+
   useEffect(() => {
     if (!loaded) return;
     setProjects(mockGetProjects());
-    setUsersList(mockListUsers()); // ahora devuelve solo usuarios
+    setUsersList(mockListUsers());
   }, [loaded]);
 
   function refresh() {
     setProjects(mockGetProjects());
+  }
+
+  // Helpers para toasts
+  function pushToast(message, type = "success", timeout = 3500) {
+    const id = Date.now() + Math.random();
+    setToasts((t) => [...t, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((t) => t.filter((x) => x.id !== id));
+    }, timeout);
   }
 
   // Seguridad: userId protegido
@@ -78,8 +90,10 @@ export default function DashboardPage() {
       setProjForm({ id: null, title: "", description: "", startDate: "", endDate: "" });
       refresh();
       setExpandedProjectId(created.id);
+      pushToast("Proyecto creado correctamente", "success");
     } catch (err) {
       setProjError(err.message || "Error creando proyecto");
+      pushToast(err.message || "Error creando proyecto", "error");
     }
   };
 
@@ -94,16 +108,23 @@ export default function DashboardPage() {
       });
       setProjForm({ id: null, title: "", description: "", startDate: "", endDate: "" });
       refresh();
+      pushToast("Proyecto actualizado", "success");
     } catch (err) {
       setProjError(err.message || "Error actualizando proyecto");
+      pushToast(err.message || "Error actualizando proyecto", "error");
     }
   };
 
   const handleDeleteProject = (id) => {
     if (!confirm("¿Eliminar proyecto? Esta acción es irreversible.")) return;
-    mockDeleteProject(id);
-    refresh();
-    if (expandedProjectId === id) setExpandedProjectId(null);
+    try {
+      mockDeleteProject(id);
+      refresh();
+      if (expandedProjectId === id) setExpandedProjectId(null);
+      pushToast("Proyecto eliminado", "success");
+    } catch (err) {
+      pushToast(err.message || "Error eliminando proyecto", "error");
+    }
   };
 
   const openEditProject = (p) => {
@@ -159,6 +180,7 @@ export default function DashboardPage() {
           assignedTo: taskForm.assignedTo,
           status: taskForm.status,
         });
+        pushToast("Tarea actualizada", "success");
       } else {
         mockCreateTask(projectId, {
           name: taskForm.name,
@@ -167,18 +189,25 @@ export default function DashboardPage() {
           assignedTo: taskForm.assignedTo,
           status: taskForm.status,
         });
+        pushToast("Tarea creada", "success");
       }
       setTaskForm({ id: null, name: "", description: "", assignedDays: 0, assignedTo: null, status: STATUS_OPTIONS[0], projectId: null });
       refresh();
     } catch (err) {
       setTaskError(err.message || "Error guardando tarea");
+      pushToast(err.message || "Error guardando tarea", "error");
     }
   };
 
   const handleDeleteTask = (projectId, taskId) => {
     if (!confirm("¿Eliminar tarea?")) return;
-    mockDeleteTask(projectId, taskId);
-    refresh();
+    try {
+      mockDeleteTask(projectId, taskId);
+      refresh();
+      pushToast("Tarea eliminada", "success");
+    } catch (err) {
+      pushToast(err.message || "Error eliminando tarea", "error");
+    }
   };
 
   if (!loaded) return null;
@@ -193,6 +222,15 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen p-8">
+      {/* TOASTS */}
+      <div className="toast-wrap" aria-live="polite">
+        {toasts.map((t) => (
+          <div key={t.id} className={`toast ${t.type === "success" ? "toast-success" : "toast-error"}`}>
+            <div>{t.message}</div>
+          </div>
+        ))}
+      </div>
+
       <div className="container-center">
         <header className="flex items-center justify-between mb-6">
           <div>
@@ -258,6 +296,7 @@ export default function DashboardPage() {
           {visibleProjects.map((p) => {
             const daysInfo = mockProjectDaysInfo(p);
             const available = daysInfo.available;
+            const remaining = daysInfo.remaining;
             // completedDays: suma de assignedDays de tareas con estado 'Completado'
             const completedDays = (p.tasks || []).filter(t => String(t.status) === "Completado")
               .reduce((s, t) => s + Number(t.assignedDays || 0), 0);
@@ -305,10 +344,20 @@ export default function DashboardPage() {
                   <div className="card-body form-wrap">
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem" }}>
                       <h4 className="font-semibold">Tareas</h4>
-                      <div style={{ display: "flex", gap: ".5rem" }}>
-                        {/* Gerente puede crear tareas */}
+                      <div style={{ display: "flex", gap: ".5rem", alignItems: "center" }}>
+                        {/* Botón nueva tarea: solo gerente, y deshabilitado si no quedan días */}
                         {user?.role === "gerente" && (
-                          <button className="btn btn-primary" onClick={() => openNewTaskFor(p.id)}>Nueva tarea</button>
+                          <>
+                            <button
+                              className="btn btn-primary"
+                              onClick={() => openNewTaskFor(p.id)}
+                              disabled={remaining <= 0}
+                              title={remaining <= 0 ? "No quedan días disponibles en este proyecto" : "Crear nueva tarea"}
+                            >
+                              Nueva tarea
+                            </button>
+                            {remaining <= 0 && <div className="warn">No quedan días disponibles</div>}
+                          </>
                         )}
                       </div>
                     </div>
@@ -317,22 +366,31 @@ export default function DashboardPage() {
                       {(p.tasks || []).length === 0 && <div className="text-sm text-[var(--muted)]">Sin tareas aún.</div>}
 
                       {(p.tasks || []).map((t) => {
-                        const assignedToName = usersList.find(u => u.id === t.assignedTo)?.name || "No asignado";
+                        const assignedToName = mockListUsers().find(u => u.id === t.assignedTo)?.name || "No asignado";
+                        // badge según estado
+                        let badgeClass = "badge-new";
+                        if (String(t.status) === "Nuevo") badgeClass = "badge-new";
+                        if (String(t.status) === "En curso") badgeClass = "badge-progress";
+                        if (String(t.status) === "Cerrado") badgeClass = "badge-closed";
+                        if (String(t.status) === "Completado") badgeClass = "badge-done";
+
                         const canEditTask = user?.role === "gerente" || t.assignedTo === userId;
                         const userIsAssignedHere = t.assignedTo === userId;
                         return (
                           <div key={t.id} className="project-item">
                             <div style={{ flex: 1 }}>
-                              <div style={{ fontWeight: 700 }}>{t.name}</div>
+                              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                                <div style={{ fontWeight: 700 }}>{t.name}</div>
+                                <div className={badgeClass} style={{ fontWeight: 700 }}>{t.status}</div>
+                              </div>
                               <div className="text-sm text-[var(--muted)]">{t.description}</div>
                               <div className="text-sm text-[var(--muted)] mt-1">Días asignados: {t.assignedDays} · Responsable: {assignedToName}</div>
-                              <div className="text-sm text-[var(--muted)]">Estado: <strong>{t.status}</strong></div>
                             </div>
 
                             <div style={{ display: "flex", flexDirection: "column", gap: ".5rem", minWidth: 160 }}>
                               {/* Si usuario asignado, permite cambiar estado (solo su tarea) */}
                               {user?.role === "usuario" && userIsAssignedHere && (
-                                <select className="input" value={t.status} onChange={(e)=>{ mockUpdateTask(p.id, t.id, { status: e.target.value }); refresh(); }}>
+                                <select className="input" value={t.status} onChange={(e)=>{ mockUpdateTask(p.id, t.id, { status: e.target.value }); refresh(); pushToast("Estado actualizado", "success"); }}>
                                   {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
                               )}
