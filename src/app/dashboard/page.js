@@ -26,7 +26,7 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const [projects, setProjects] = useState([]);
-  const [expandedProjectId, setExpandedProjectId] = useState(null);
+  const [modalProject, setModalProject] = useState(null);
 
   const [projForm, setProjForm] = useState({ id: null, title: '', description: '', startDate: '', endDate: '' });
   const [projError, setProjError] = useState('');
@@ -35,7 +35,7 @@ export default function DashboardPage() {
     id: null,
     name: '',
     description: '',
-    assignedDays: 0,
+    assignedDays: 1,
     assignedTo: null,
     status: STATUS_OPTIONS[0],
     projectId: null,
@@ -53,6 +53,10 @@ export default function DashboardPage() {
 
   function refresh() {
     setProjects(mockGetProjects());
+    if (modalProject) {
+      const updated = mockGetProjects().find((p) => p.id === modalProject.id) || null;
+      setModalProject(updated);
+    }
   }
 
   function pushToast(message, type = 'success', timeout = 3500) {
@@ -63,7 +67,7 @@ export default function DashboardPage() {
 
   const userId = user?.id ?? null;
 
-  // PROJECT CRUD -------------------------------------------------------------
+  // PROJECT CRUD
   const handleCreateProject = () => {
     setProjError('');
     try {
@@ -75,7 +79,7 @@ export default function DashboardPage() {
       });
       setProjForm({ id: null, title: '', description: '', startDate: '', endDate: '' });
       refresh();
-      setExpandedProjectId(created.id);
+      setModalProject(created);
       pushToast('Proyecto creado correctamente', 'success');
     } catch (err) {
       setProjError(err.message || 'Error creando proyecto');
@@ -106,7 +110,7 @@ export default function DashboardPage() {
     try {
       mockDeleteProject(id);
       refresh();
-      if (expandedProjectId === id) setExpandedProjectId(null);
+      if (modalProject && modalProject.id === id) setModalProject(null);
       pushToast('Proyecto eliminado', 'success');
     } catch (err) {
       pushToast(err.message || 'Error eliminando proyecto', 'error');
@@ -118,11 +122,12 @@ export default function DashboardPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // TASKS CRUD ---------------------------------------------------------------
+  // TASKS CRUD
   const openNewTaskFor = (projectId) => {
     setTaskError('');
-    setTaskForm({ id: null, name: '', description: '', assignedDays: 0, assignedTo: null, status: STATUS_OPTIONS[0], projectId });
-    setExpandedProjectId(projectId);
+    setTaskForm({ id: null, name: '', description: '', assignedDays: 1, assignedTo: null, status: STATUS_OPTIONS[0], projectId });
+    const p = projects.find((x) => x.id === projectId);
+    if (p) setModalProject(p);
   };
 
   const openEditTask = (projectId, task) => {
@@ -131,24 +136,33 @@ export default function DashboardPage() {
       id: task.id,
       name: task.name,
       description: task.description,
-      assignedDays: task.assignedDays,
+      assignedDays: task.assignedDays ?? 1,
       assignedTo: task.assignedTo,
       status: task.status || STATUS_OPTIONS[0],
       projectId,
     });
-    setExpandedProjectId(projectId);
+    const p = projects.find((x) => x.id === projectId);
+    if (p) setModalProject(p);
   };
 
   const handleSaveTask = () => {
     setTaskError('');
     const { projectId } = taskForm;
     if (!projectId) return setTaskError('Proyecto no seleccionado');
+
+    const days = Number(taskForm.assignedDays || 0);
+    if (!Number.isFinite(days) || days < 1) {
+      setTaskError('La tarea debe tener al menos 1 día asignado.');
+      pushToast('La tarea debe tener al menos 1 día asignado.', 'error');
+      return;
+    }
+
     try {
       if (taskForm.id) {
         mockUpdateTask(projectId, taskForm.id, {
           name: taskForm.name,
           description: taskForm.description,
-          assignedDays: Number(taskForm.assignedDays),
+          assignedDays: days,
           assignedTo: taskForm.assignedTo,
           status: taskForm.status,
         });
@@ -157,13 +171,13 @@ export default function DashboardPage() {
         mockCreateTask(projectId, {
           name: taskForm.name,
           description: taskForm.description,
-          assignedDays: Number(taskForm.assignedDays),
+          assignedDays: days,
           assignedTo: taskForm.assignedTo,
           status: taskForm.status,
         });
         pushToast('Tarea creada', 'success');
       }
-      setTaskForm({ id: null, name: '', description: '', assignedDays: 0, assignedTo: null, status: STATUS_OPTIONS[0], projectId: null });
+      setTaskForm({ id: null, name: '', description: '', assignedDays: 1, assignedTo: null, status: STATUS_OPTIONS[0], projectId: null });
       refresh();
     } catch (err) {
       setTaskError(err.message || 'Error guardando tarea');
@@ -181,6 +195,32 @@ export default function DashboardPage() {
       pushToast(err.message || 'Error eliminando tarea', 'error');
     }
   };
+
+  // Modal helpers
+  const openModal = (project) => {
+    setModalProject(project);
+  };
+  const closeModal = () => {
+    setModalProject(null);
+    setTaskForm({ id: null, name: '', description: '', assignedDays: 1, assignedTo: null, status: STATUS_OPTIONS[0], projectId: null });
+  };
+
+  // block body scroll while modal open, Esc to close
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === 'Escape') closeModal();
+    }
+    if (modalProject) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', onKey);
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [modalProject]);
 
   if (!loaded) return null;
 
@@ -206,7 +246,6 @@ export default function DashboardPage() {
               Bienvenido <strong>{user?.name}</strong> — {user?.role}
             </p>
           </div>
-
           <div className="flex items-center gap-3">
             <button
               className="btn btn-logout"
@@ -220,7 +259,7 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {/* PROYECTO: formulario crear/editar (solo gerente) */}
+        {/* Project create/edit (gerente) */}
         {user?.role === 'gerente' && (
           <div className="card project-card mb-6">
             <div className="card-header form-wrap">
@@ -235,7 +274,7 @@ export default function DashboardPage() {
                       className="btn btn-open"
                       onClick={() => setProjForm({ id: null, title: '', description: '', startDate: '', endDate: '' })}
                     >
-                      Limpiar
+                      Cancelar edición
                     </button>
                   ) : null}
                 </div>
@@ -244,7 +283,6 @@ export default function DashboardPage() {
 
             <div className="card-body form-wrap">
               {projError && <div className="text-sm text-red-700 bg-red-50 p-2 rounded mb-3">{projError}</div>}
-
               <div className="grid" style={{ gap: '0.75rem' }}>
                 <input
                   placeholder="Título"
@@ -295,14 +333,13 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* LISTADO DE PROYECTOS */}
+        {/* Projects list */}
         <div className="space-y-4">
           {visibleProjects.length === 0 ? <div className="text-sm text-[var(--muted)]">No hay proyectos visibles.</div> : null}
 
           {visibleProjects.map((p) => {
             const daysInfo = mockProjectDaysInfo(p);
             const available = daysInfo.available;
-            const remaining = daysInfo.remaining;
             const completedDays = (p.tasks || [])
               .filter((t) => String(t.status) === 'Completado')
               .reduce((s, t) => s + Number(t.assignedDays || 0), 0);
@@ -319,11 +356,13 @@ export default function DashboardPage() {
                     <div style={{ fontWeight: 700 }}>{p.title}</div>
                     <div className="text-sm text-[var(--muted)]">{p.description}</div>
                     <div className="text-sm text-[var(--muted)] mt-1">
-                      {p.startDate} → {p.endDate} · Disponibles: {available}d · Ocupados: {daysInfo.used}d
+                      {p.startDate} → {p.endDate} · Disponibles: {daysInfo.available}d · Ocupados: {daysInfo.used}d
                     </div>
 
-                    {/* BARRA DE PROGRESO: pista + fill, usando variables CSS existentes (blue-600/700) */}
-                    <div style={{ marginTop: 8, width: '100%', background: 'rgba(2,6,23,0.06)', borderRadius: 8, height: 12 }}>
+                    <div
+                      style={{ marginTop: 8, width: '100%', background: 'rgba(2,6,23,0.06)', borderRadius: 8, height: 12 }}
+                      className="progress-track"
+                    >
                       <div
                         style={{
                           width: `${safePercent}%`,
@@ -334,20 +373,14 @@ export default function DashboardPage() {
                         }}
                       />
                     </div>
-
                     <div className="text-sm text-[var(--muted)] mt-1">
-                      Progreso: {safePercent}% ({completedDays}d de {available}d)
+                      Progreso: {safePercent}% ({completedDays}d de {daysInfo.available}d)
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center' }}>
-                    <button
-                      className="btn btn-open"
-                      onClick={() => {
-                        setExpandedProjectId(expandedProjectId === p.id ? null : p.id);
-                      }}
-                    >
-                      {expandedProjectId === p.id ? 'Cerrar' : 'Abrir'}
+                    <button className="btn btn-open" onClick={() => openModal(p)}>
+                      Abrir
                     </button>
 
                     {user?.role === 'gerente' && (
@@ -362,177 +395,326 @@ export default function DashboardPage() {
                     )}
                   </div>
                 </div>
-
-                {expandedProjectId === p.id && (
-                  <div className="card-body form-wrap">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-                      <h4 className="font-semibold">Tareas</h4>
-                      <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center' }}>
-                        {user?.role === 'gerente' && (
-                          <>
-                            <button
-                              className="btn btn-primary btn-fixed"
-                              onClick={() => openNewTaskFor(p.id)}
-                              disabled={remaining <= 0}
-                              title={remaining <= 0 ? 'No quedan días disponibles en este proyecto' : 'Crear nueva tarea'}
-                            >
-                              Nueva tarea
-                            </button>
-                            {remaining <= 0 && <div className="warn">No quedan días disponibles</div>}
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mt-3 space-y-3">
-                      {(p.tasks || []).length === 0 && <div className="text-sm text-[var(--muted)]">Sin tareas aún.</div>}
-
-                      {(p.tasks || []).map((t) => {
-                        const assignedToName = usersList.find((u) => u.id === t.assignedTo)?.name || 'No asignado';
-                        let badgeClass = 'badge-new';
-                        if (String(t.status) === 'Nuevo') badgeClass = 'badge-new';
-                        if (String(t.status) === 'En curso') badgeClass = 'badge-progress';
-                        if (String(t.status) === 'Cerrado') badgeClass = 'badge-closed';
-                        if (String(t.status) === 'Completado') badgeClass = 'badge-done';
-
-                        const userIsAssignedHere = t.assignedTo === userId;
-                        return (
-                          <div key={t.id} className="task-card project-item">
-                            <div style={{ flex: 1 }}>
-                              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                                <div style={{ fontWeight: 700 }}>{t.name}</div>
-                                <div className={badgeClass} style={{ fontWeight: 700 }}>
-                                  {t.status}
-                                </div>
-                              </div>
-                              <div className="text-sm text-[var(--muted)]">{t.description}</div>
-                              <div className="text-sm text-[var(--muted)] mt-1">
-                                Días asignados: {t.assignedDays} · Responsable: {assignedToName}
-                              </div>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem', alignItems: 'flex-end', minWidth: 120 }}>
-                              {user?.role === 'usuario' && userIsAssignedHere && (
-                                <select
-                                  className="input"
-                                  value={t.status}
-                                  onChange={(e) => {
-                                    mockUpdateTask(p.id, t.id, { status: e.target.value });
-                                    refresh();
-                                    pushToast('Estado actualizado', 'success');
-                                  }}
-                                >
-                                  {STATUS_OPTIONS.map((s) => (
-                                    <option key={s} value={s}>
-                                      {s}
-                                    </option>
-                                  ))}
-                                </select>
-                              )}
-
-                              {user?.role === 'gerente' && (
-                                <>
-                                  <button className="btn btn-sm btn-edit btn-fixed" onClick={() => openEditTask(p.id, t)}>
-                                    Editar
-                                  </button>
-                                  <button className="btn btn-sm btn-delete btn-fixed" onClick={() => handleDeleteTask(p.id, t.id)}>
-                                    Eliminar
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {taskForm.projectId === p.id && (
-                      <div className="mt-4">
-                        <h5 className="font-semibold">Crear / Editar tarea</h5>
-                        {taskError && <div className="text-sm text-red-700 bg-red-50 p-2 rounded mb-3">{taskError}</div>}
-                        <div style={{ display: 'grid', gap: '.5rem', marginTop: '.5rem' }}>
-                          <input
-                            placeholder="Nombre de la tarea"
-                            className="input"
-                            value={taskForm.name}
-                            onChange={(e) => setTaskForm({ ...taskForm, name: e.target.value })}
-                          />
-                          <textarea
-                            placeholder="Descripción"
-                            className="input"
-                            rows={3}
-                            value={taskForm.description}
-                            onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
-                          ></textarea>
-
-                          <div style={{ display: 'flex', gap: '.5rem' }}>
-                            <input
-                              type="number"
-                              className="input"
-                              min={0}
-                              placeholder="Días asignados"
-                              value={taskForm.assignedDays}
-                              onChange={(e) => setTaskForm({ ...taskForm, assignedDays: Number(e.target.value) })}
-                            />
-                            <select
-                              className="input"
-                              value={taskForm.assignedTo ?? ''}
-                              onChange={(e) => setTaskForm({ ...taskForm, assignedTo: e.target.value ? Number(e.target.value) : null })}
-                            >
-                              <option value="">-- asignar a --</option>
-                              {usersList.map((u) => (
-                                <option key={u.id} value={u.id}>
-                                  {u.name} ({u.email})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div style={{ display: 'flex', gap: '.5rem', marginTop: '.5rem' }}>
-                            <select
-                              className="input"
-                              value={taskForm.status}
-                              onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value })}
-                            >
-                              {STATUS_OPTIONS.map((s) => (
-                                <option key={s} value={s}>
-                                  {s}
-                                </option>
-                              ))}
-                            </select>
-
-                            <div style={{ flex: 1, display: 'flex', gap: '.5rem' }}>
-                              <button className="btn btn-primary" onClick={handleSaveTask}>
-                                {taskForm.id ? 'Actualizar tarea' : 'Crear tarea'}
-                              </button>
-                              <button
-                                className="btn btn-open"
-                                onClick={() =>
-                                  setTaskForm({
-                                    id: null,
-                                    name: '',
-                                    description: '',
-                                    assignedDays: 0,
-                                    assignedTo: null,
-                                    status: STATUS_OPTIONS[0],
-                                    projectId: null,
-                                  })
-                                }
-                              >
-                                Cancelar
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* MODAL: project + tasks */}
+      {modalProject && (
+        <div
+          className="modal-overlay"
+          onMouseDown={(e) => {
+            if (e.target.classList.contains('modal-overlay')) closeModal();
+          }}
+        >
+          <div className="modal-content modal" role="dialog" aria-modal="true" aria-label={`Proyecto ${modalProject.title}`}>
+            <div className="modal-header">
+              <div>
+                <h3 style={{ margin: 0, fontWeight: 800 }}>{modalProject.title}</h3>
+                <div className="text-sm text-[var(--muted)]">{modalProject.description}</div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center' }}>
+                <button className="modal-close" aria-label="Cerrar modal" onClick={() => closeModal()}>
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="modal-body">
+              {/* header info + "Nueva tarea" */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 0' }}>
+                  <div className="text-sm text-[var(--muted)]">
+                    {modalProject.startDate} → {modalProject.endDate}
+                  </div>
+                  <div className="text-sm text-[var(--muted)]">
+                    Disponibles: {mockProjectDaysInfo(modalProject).available}d · Ocupados: {mockProjectDaysInfo(modalProject).used}d
+                  </div>
+
+                  <div
+                    style={{ marginTop: 8, width: '100%', background: 'rgba(2,6,23,0.06)', borderRadius: 8, height: 14 }}
+                    className="progress-track"
+                  >
+                    <div
+                      style={{
+                        width: `${
+                          mockProjectDaysInfo(modalProject).available > 0
+                            ? Math.round(
+                                ((modalProject.tasks || [])
+                                  .filter((t) => String(t.status) === 'Completado')
+                                  .reduce((s, t) => s + Number(t.assignedDays || 0), 0) /
+                                  mockProjectDaysInfo(modalProject).available) *
+                                  100
+                              )
+                            : 0
+                        }%`,
+                        height: '100%',
+                        background: 'linear-gradient(90deg, var(--blue-600), var(--blue-700))',
+                        borderRadius: 8,
+                        transition: 'width .3s ease',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ minWidth: 160, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '.5rem' }}>
+                  {user?.role === 'gerente' && (
+                    <button
+                      className="btn btn-primary btn-fixed"
+                      onClick={() => openNewTaskFor(modalProject.id)}
+                      disabled={mockProjectDaysInfo(modalProject).remaining <= 0}
+                    >
+                      Nueva tarea
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* ---------- CREATE FORM (aparece en la cabecera si estamos en modo creación) ---------- */}
+              {taskForm.projectId === modalProject.id && taskForm.id === null && (
+                <div style={{ marginTop: 12 }} className="card task-card">
+                  <div className="card-body">
+                    <h4 style={{ margin: 0, fontWeight: 700 }}>Crear tarea</h4>
+                    {taskError && <div className="text-sm text-red-700 bg-red-50 p-2 rounded mb-3">{taskError}</div>}
+
+                    <div style={{ display: 'grid', gap: '.5rem', marginTop: '.5rem' }}>
+                      <input
+                        placeholder="Nombre de la tarea"
+                        className="input"
+                        value={taskForm.name}
+                        onChange={(e) => setTaskForm({ ...taskForm, name: e.target.value })}
+                      />
+                      <textarea
+                        placeholder="Descripción"
+                        className="input"
+                        rows={3}
+                        value={taskForm.description}
+                        onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+                      ></textarea>
+
+                      <div style={{ display: 'flex', gap: '.5rem' }}>
+                        <input
+                          type="number"
+                          className="input"
+                          min={1}
+                          placeholder="Días asignados"
+                          value={taskForm.assignedDays}
+                          onChange={(e) => setTaskForm({ ...taskForm, assignedDays: Number(e.target.value) })}
+                        />
+
+                        <select
+                          className="input"
+                          value={taskForm.assignedTo ?? ''}
+                          onChange={(e) => setTaskForm({ ...taskForm, assignedTo: e.target.value ? Number(e.target.value) : null })}
+                        >
+                          <option value="">-- asignar a --</option>
+                          {usersList.map((u) => (
+                            <option key={u.id} value={u.id}>
+                              {u.name} ({u.email})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '.5rem', marginTop: '.5rem' }}>
+                        <select
+                          className="input"
+                          value={taskForm.status}
+                          onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value })}
+                        >
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+
+                        <div style={{ flex: 1, display: 'flex', gap: '.5rem' }}>
+                          <button className="btn btn-primary" onClick={handleSaveTask}>
+                            Crear tarea
+                          </button>
+                          <button
+                            className="btn btn-open"
+                            onClick={() =>
+                              setTaskForm({
+                                id: null,
+                                name: '',
+                                description: '',
+                                assignedDays: 1,
+                                assignedTo: null,
+                                status: STATUS_OPTIONS[0],
+                                projectId: null,
+                              })
+                            }
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ---------- TASK LIST: cada tarea puede mostrar su propio formulario inline si está en modo edición ---------- */}
+              <div className="modal-tasks" style={{ marginTop: 12 }}>
+                {(modalProject.tasks || []).length === 0 && <div className="text-sm text-[var(--muted)]">Sin tareas aún.</div>}
+
+                {(modalProject.tasks || []).map((t) => {
+                  const assignedToName = usersList.find((u) => u.id === t.assignedTo)?.name || 'No asignado';
+                  let badgeClass = 'badge-new';
+                  if (String(t.status) === 'Nuevo') badgeClass = 'badge-new';
+                  if (String(t.status) === 'En curso') badgeClass = 'badge-progress';
+                  if (String(t.status) === 'Cerrado') badgeClass = 'badge-closed';
+                  if (String(t.status) === 'Completado') badgeClass = 'badge-done';
+
+                  const userIsAssignedHere = t.assignedTo === userId;
+                  const isEditingThis = taskForm.id === t.id;
+
+                  return (
+                    <div key={t.id} className="task-card project-item">
+                      {/* Si estamos editando exactamente esta tarea, mostramos el formulario inline en lugar de la vista normal */}
+                      {isEditingThis ? (
+                        <div style={{ width: '100%' }}>
+                          <h4 style={{ marginTop: 0, marginBottom: 8, fontWeight: 700 }}>Editar tarea</h4>
+                          {taskError && <div className="text-sm text-red-700 bg-red-50 p-2 rounded mb-3">{taskError}</div>}
+
+                          <div style={{ display: 'grid', gap: '.5rem' }}>
+                            <input
+                              placeholder="Nombre de la tarea"
+                              className="input"
+                              value={taskForm.name}
+                              onChange={(e) => setTaskForm({ ...taskForm, name: e.target.value })}
+                            />
+                            <textarea
+                              placeholder="Descripción"
+                              className="input"
+                              rows={3}
+                              value={taskForm.description}
+                              onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+                            ></textarea>
+
+                            <div style={{ display: 'flex', gap: '.5rem' }}>
+                              <input
+                                type="number"
+                                className="input"
+                                min={1}
+                                placeholder="Días asignados"
+                                value={taskForm.assignedDays}
+                                onChange={(e) => setTaskForm({ ...taskForm, assignedDays: Number(e.target.value) })}
+                              />
+
+                              <select
+                                className="input"
+                                value={taskForm.assignedTo ?? ''}
+                                onChange={(e) => setTaskForm({ ...taskForm, assignedTo: e.target.value ? Number(e.target.value) : null })}
+                              >
+                                <option value="">-- asignar a --</option>
+                                {usersList.map((u) => (
+                                  <option key={u.id} value={u.id}>
+                                    {u.name} ({u.email})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '.5rem', marginTop: '.5rem' }}>
+                              <select
+                                className="input"
+                                value={taskForm.status}
+                                onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value })}
+                              >
+                                {STATUS_OPTIONS.map((s) => (
+                                  <option key={s} value={s}>
+                                    {s}
+                                  </option>
+                                ))}
+                              </select>
+
+                              <div style={{ flex: 1, display: 'flex', gap: '.5rem' }}>
+                                <button className="btn btn-primary" onClick={handleSaveTask}>
+                                  Actualizar tarea
+                                </button>
+                                <button
+                                  className="btn btn-open"
+                                  onClick={() =>
+                                    setTaskForm({
+                                      id: null,
+                                      name: '',
+                                      description: '',
+                                      assignedDays: 1,
+                                      assignedTo: null,
+                                      status: STATUS_OPTIONS[0],
+                                      projectId: null,
+                                    })
+                                  }
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                              <div style={{ fontWeight: 700 }}>{t.name}</div>
+                              <div className={badgeClass} style={{ fontWeight: 700 }}>
+                                {t.status}
+                              </div>
+                            </div>
+                            <div className="text-sm text-[var(--muted)]">{t.description}</div>
+                            <div className="text-sm text-[var(--muted)] mt-1">
+                              Días asignados: {t.assignedDays} · Responsable: {assignedToName}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem', alignItems: 'flex-end', minWidth: 120 }}>
+                            {user?.role === 'usuario' && userIsAssignedHere && (
+                              <select
+                                className="input"
+                                value={t.status}
+                                onChange={(e) => {
+                                  mockUpdateTask(modalProject.id, t.id, { status: e.target.value });
+                                  refresh();
+                                  pushToast('Estado actualizado', 'success');
+                                }}
+                              >
+                                {STATUS_OPTIONS.map((s) => (
+                                  <option key={s} value={s}>
+                                    {s}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+
+                            {user?.role === 'gerente' && (
+                              <>
+                                <button className="btn btn-sm btn-edit btn-fixed" onClick={() => openEditTask(modalProject.id, t)}>
+                                  Editar
+                                </button>
+                                <button className="btn btn-sm btn-delete btn-fixed" onClick={() => handleDeleteTask(modalProject.id, t.id)}>
+                                  Eliminar
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* (Ya no hay formulario global al final; creación/edición está arriba o inline) */}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

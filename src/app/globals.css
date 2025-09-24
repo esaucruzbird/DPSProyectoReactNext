@@ -91,27 +91,44 @@ body {
   margin: 0 auto;
 }
 
-/* Inputs */
+/* --- Inputs, selects y textareas: heredan la fuente del body y tienen el mismo aspecto que el texto del listado --- */
 .input,
 select,
 textarea {
   width: 100%;
-  padding: 0.625rem 0.75rem;
+  padding: .625rem .75rem;
   border-radius: 8px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15,23,42,0.08);
   background: #fff;
   color: var(--text);
+
+  /* importante: heredar tipografía del contenedor (body) */
+  font-family: inherit;
   font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.4;
+
   outline: none;
   box-sizing: border-box;
-  transition: box-shadow 0.15s, border-color 0.15s, transform 0.08s;
+  transition: box-shadow .15s, border-color .15s, transform .08s;
+}
+/* placeholder más suave y consistente */
+.input::placeholder,
+select::placeholder,
+textarea::placeholder {
+  color: rgba(100,115,139,0.7); /* coincide con --muted visualmente */
+  font-weight: 400;
 }
 .input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--blue-700);
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.12);
+  box-shadow: 0 4px 14px rgba(2,132,199,0.12);
   transform: translateY(-1px);
+}
+/* Si se quiere asegurar aún más la consistencia dentro del modal y las cards */
+.card, .modal-content, .project-card, .task-card {
+  font-family: inherit;
 }
 
 /* Buttons base + hover animation */
@@ -297,3 +314,69 @@ a.link:hover {
   font-weight: 600;
   font-size: 0.9rem;
 }
+
+/* ---------- MODAL (overlay + caja) ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2,6,23,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1.25rem;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 920px;
+  max-height: 90vh;
+  overflow: auto;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 20px 60px rgba(2,6,23,0.35);
+  border: 1px solid rgba(2,6,23,0.06);
+  padding: 1rem 1.25rem;
+}
+
+/* modal header */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid rgba(2,6,23,0.04);
+}
+
+/* modal body spacing */
+.modal-body {
+  padding-top: 1rem;
+}
+
+/* close button */
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.05rem;
+  cursor: pointer;
+  padding: .35rem;
+  border-radius: 8px;
+}
+.modal-close:hover { background: rgba(2,6,23,0.04); transform: translateY(-2px); }
+
+/* ensure task list inside modal fits nicely */
+.modal-tasks { display: grid; gap: .75rem; margin-top: .75rem; }
+
+/* keep consistent small buttons inside modal tasks */
+.modal .btn-sm { font-size: .85rem; padding: .35rem .5rem; }
+
+/* make the progress bar a little taller in modal */
+.modal .progress-track { height: 14px; border-radius: 10px; }
+
+/* small responsive tweak */
+@media (max-width: 640px) {
+  .modal-content { padding: .75rem; max-width: 100%; }
+}
+
+
