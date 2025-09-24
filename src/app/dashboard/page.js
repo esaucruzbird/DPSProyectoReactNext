@@ -251,7 +251,7 @@ export default function DashboardPage() {
               className="btn btn-logout"
               onClick={() => {
                 logout();
-                router.push('/login');
+                router.push('/');
               }}
             >
               Salir

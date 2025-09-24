@@ -1,30 +1,31 @@
-"use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../../context/AuthContext";
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../context/AuthContext';
+import Link from 'next/link';
 
 export default function RegisterPage() {
   const { register } = useAuth();
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "usuario" });
-  const [error, setError] = useState("");
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'usuario' });
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const onSubmit = (e) => {
     e.preventDefault();
-    setError("");
+    setError('');
     if (!form.name || !form.email || !form.password) {
-      setError("Por favor completa todos los campos.");
+      setError('Por favor completa todos los campos.');
       return;
     }
     try {
       setLoading(true);
       register(form);
-      router.push("/dashboard");
+      router.push('/dashboard');
     } catch (err) {
-      setError(err.message || "Error al registrar");
+      setError(err.message || 'Error al registrar');
     } finally {
       setLoading(false);
     }
@@ -56,14 +57,28 @@ export default function RegisterPage() {
                 <div className="form-row">
                   <label className="block">
                     <div className="text-sm text-[var(--muted)] mb-1">Email</div>
-                    <input name="email" value={form.email} onChange={onChange} type="email" placeholder="correo@ejemplo.com" className="input" />
+                    <input
+                      name="email"
+                      value={form.email}
+                      onChange={onChange}
+                      type="email"
+                      placeholder="correo@ejemplo.com"
+                      className="input"
+                    />
                   </label>
                 </div>
 
                 <div className="form-row">
                   <label className="block">
                     <div className="text-sm text-[var(--muted)] mb-1">Contraseña</div>
-                    <input name="password" value={form.password} onChange={onChange} type="password" placeholder="Contraseña segura" className="input" />
+                    <input
+                      name="password"
+                      value={form.password}
+                      onChange={onChange}
+                      type="password"
+                      placeholder="Contraseña segura"
+                      className="input"
+                    />
                   </label>
                 </div>
 
@@ -79,17 +94,18 @@ export default function RegisterPage() {
 
                 <div className="form-row">
                   <button type="submit" disabled={loading} className="btn btn-primary w-full">
-                    {loading ? "Creando cuenta..." : "Registrarme"}
+                    {loading ? 'Creando cuenta...' : 'Registrarme'}
                   </button>
                 </div>
-
+                
                 <div className="form-row text-center">
-                  <a className="link" href="/login">¿Ya tienes cuenta? Inicia sesión</a>
+                  <Link href="/" className="link">
+                    ¿Ya tienes cuenta? Inicia sesión
+                  </Link>
                 </div>
               </form>
             </div>
           </div>
-
         </div>
       </div>
     </main>

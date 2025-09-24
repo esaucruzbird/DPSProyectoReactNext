@@ -10,7 +10,7 @@ export default function useRequireAuth(allowedRoles = null) {
   useEffect(() => {
     if (!loaded) return; // espera a cargar session desde localStorage
     if (!isAuthenticated) {
-      router.replace("/login");
+      router.replace("/"); //Aqui se puede forzar que apunte siempre a la page que hay en /login
       return;
     }
     if (allowedRoles && !allowedRoles.includes(user?.role)) {
