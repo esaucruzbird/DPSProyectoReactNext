@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Paleta principal */
+/*paleta principal*/
 :root {
   --bg: #eef3f6;
   --surface: #ffffff;
@@ -15,13 +15,13 @@
   --task-surface: #fbfeff;
   --task-border: rgba(3, 105, 161, 0.06);
 
-  /* colores de botones */
-  --green-600: #16a34a; /* Crear / Nueva tarea (verde) */
+  /*colores de botones */
+  --green-600: #16a34a; /*para botones de crear o hacer nueva tarea (verde) */
   --green-700: #15803d;
-  --blue-600: #0369a1; /* Abrir / Cerrar (azul) */
+  --blue-600: #0369a1; /*para botones de abrir y cerrar (azul) */
   --blue-700: #035f8c;
-  --mustard: #c08400; /* Editar (mostaza) */
-  --red-600: #ef4444; /* Eliminar */
+  --mustard: #c08400; /*para botones de editar (mostaza) */
+  --red-600: #ef4444; /*para botones de eliminar */
   --logout-bg: #0b0b0b;
   --logout-text: #ffffff;
 
@@ -29,7 +29,7 @@
   --radius-lg: 14px;
 }
 
-/* Body: único gris claro */
+/*color para body: único, color gris claro */
 html,
 body,
 #__next {
@@ -44,7 +44,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Contenedor */
+/*contenedor */
 .container-center {
   width: 100%;
   max-width: 880px;
@@ -52,7 +52,7 @@ body {
   padding: 0 1rem;
 }
 
-/* Card base */
+/*diseño de la card que encierra elementos*/
 .card {
   background: var(--surface);
   border-radius: var(--radius-lg);
@@ -70,9 +70,9 @@ body {
   padding: 1.25rem 1.5rem;
 }
 
-/* Project & Task surfaces */
+/*diseño de la tarjeta (card) para project y task surfaces */
 .project-card {
-  background: var(--project-surface);
+  background: var(--project-surface); /*superficie del proyecto*/
   border: 1px solid var(--project-border);
 }
 .project-card .card-header,
@@ -80,18 +80,18 @@ body {
   background: transparent;
 }
 .task-card {
-  background: var(--task-surface);
+  background: var(--task-surface);/*superficie de la tarjeta*/
   border: 1px solid var(--task-border);
 }
 
-/* Form wrapper */
+/*estilo de lo que envuelve (wrapper) al formulario */
 .form-wrap {
   width: 100%;
   max-width: 520px;
   margin: 0 auto;
 }
 
-/* --- Inputs, selects y textareas: heredan la fuente del body y tienen el mismo aspecto que el texto del listado --- */
+/*inputs, selects y textareas: heredan la fuente del body y tienen el mismo aspecto que el texto del listado*/
 .input,
 select,
 textarea {
@@ -102,7 +102,7 @@ textarea {
   background: #fff;
   color: var(--text);
 
-  /* importante: heredar tipografía del contenedor (body) */
+  /*OJO: hereda tipografía del contenedor (body) */
   font-family: inherit;
   font-size: 0.95rem;
   font-weight: 500;
@@ -112,11 +112,11 @@ textarea {
   box-sizing: border-box;
   transition: box-shadow .15s, border-color .15s, transform .08s;
 }
-/* placeholder más suave y consistente */
+/*placeholder más suave y consistente*/
 .input::placeholder,
 select::placeholder,
 textarea::placeholder {
-  color: rgba(100,115,139,0.7); /* coincide con --muted visualmente */
+  color: rgba(100,115,139,0.7); /*coincide con --muted visualmente */
   font-weight: 400;
 }
 .input:focus,
@@ -126,12 +126,12 @@ textarea:focus {
   box-shadow: 0 4px 14px rgba(2,132,199,0.12);
   transform: translateY(-1px);
 }
-/* Si se quiere asegurar aún más la consistencia dentro del modal y las cards */
+/*es necesario porque se quiere asegurar aún más la consistencia dentro del modal y las tarjetas*/
 .card, .modal-content, .project-card, .task-card {
   font-family: inherit;
 }
 
-/* Buttons base + hover animation */
+/*diseño para los botones base y la animacion del hover*/
 .btn {
   display: inline-flex;
   align-items: center;
@@ -150,85 +150,86 @@ textarea:focus {
   opacity: 0.6;
   transform: none;
 }
-/* hover micro-anim */
+/*hover con una micro-animacion */
 .btn:hover:not(:disabled) {
   transform: translateY(-4px);
   box-shadow: 0 12px 28px rgba(3, 105, 161, 0.1);
 }
 
-/* PRIMARY -> ahora VERDE (Crear proyecto, Nueva tarea) */
+/*clase primary, para botón verde (para crear proyecto y nueva tarea) */
 .btn-primary {
   background: linear-gradient(180deg, var(--green-600) 0%, var(--green-700) 100%);
   color: white;
   box-shadow: 0 8px 24px rgba(16, 163, 74, 0.12);
 }
 
-/* OPEN -> AZUL (Abrir / Cerrar) */
+/*clase open, para botones azules (para abrir y cerrar) */
 .btn-open {
   background: linear-gradient(180deg, var(--blue-600) 0%, var(--blue-700) 100%);
   color: white;
   box-shadow: 0 8px 16px rgba(3, 105, 161, 0.12);
 }
 
-/* EDIT (mostaza) */
+/*clase edit, para botones mostaza (para modificar información) */
 .btn-edit {
   background: var(--mustard);
   color: white;
   box-shadow: 0 8px 16px rgba(192, 128, 0, 0.12);
 }
 
-/* DELETE (rojo) */
+/*clase delete, para botones rojos (para eliminar información) */
 .btn-delete {
   background: var(--red-600);
   color: white;
   box-shadow: 0 8px 16px rgba(239, 68, 68, 0.12);
 }
 
-/* LOGOUT */
+/*clase logout, para botones negros con letras blancas (para salir del dashboard)  */
 .btn-logout {
   background: var(--logout-bg);
   color: var(--logout-text);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* ancho fijo para botones que deben coincidir con "Nueva tarea" */
+/*ancho fijo para botones que deben coincidir con el formato del botón "Nueva tarea" */
 .btn-fixed {
-  width: 120px;        /* ancho fijo: ajusta a tu gusto (120px funciona bien) */
+  width: 120px; /*ancho fijo ajustable a la situación */
   text-align: center;
 }
 
-/* Small button variant (para los botones dentro de tareas) */
+/*variante de botones pequeños (small) (para los botones para gestionar las tareas) */
 .btn-sm {
   padding: .35rem .5rem;
   font-size: .85rem;
   border-radius: 8px;
   gap: .35rem;
-  width: 120px;        /* manteniendo el mismo ancho para consistencia */
+  width: 120px; /*se mantiene el mismo ancho para consistencia */
 }
 
-/* asegurando que dentro de task-card los botones no ocupen 100% por defecto */
+/*para asegurar que dentro de task-card los botones no ocupen 100% por defecto */
 .task-card .btn,
 .task-card .btn-sm {
-  width: auto; /* por defecto no forzar 100% */
+  width: auto; /*por defecto no forzar 100% */
 }
 
-/* cuando se usa .btn-fixed combinada con .btn-sm, se fija el ancho */
+/*cuando se usa .btn-fixed combinada con .btn-sm, se fija el ancho */
 .task-card .btn-fixed {
   width: 120px;
 }
 
-/* utilitarios */
-.page-title {
+/*utilidades */
+
+.page-title { /*titulo de pagina*/
   font-size: 1.5rem;
   font-weight: 800;
   color: var(--text);
   margin: 0;
 }
-.lead {
+.lead { /*para encabezado de ciertas secciones*/
   color: var(--muted);
   font-size: 0.95rem;
 }
-.project-item {
+.project-item { /*formato para los items o tareas de los proyectos*/
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -236,22 +237,31 @@ textarea:focus {
   padding: 0.75rem;
   border-radius: 10px;
 }
+/*se define un espaciado entre los items de los proyectos, así se selecciona SOLO un .project-item
+   que venga inmediatamente después de otro .project-item. Esto es útil para aplicar margen entre elementos sin añadir margen al primero (evitas acumular margen superior en el primer item)*/
 .project-item + .project-item {
-  margin-top: 6px;
+  margin-top: 6px; /*espacio entre elementos consecutivos */
 }
-.form-row {
+.form-row { /*formato para fila de un formulario*/
   margin-top: 0.65rem;
 }
-a.link {
+a.link { /*formato para el elemento de enlace que redirige las paginas*/
   color: var(--blue-600);
   font-weight: 600;
   text-decoration: none;
 }
-a.link:hover {
+a.link:hover { /*efecto para los botones de link*/
   text-decoration: underline;
 }
 
-/* badges */
+/*badges: insignias, componentes pequeños y visualmente llamativos que se utilizan para mostrar información contextual, como un estado, una categoría, o una cuenta de notificaciones*/
+
+/* - display: inline-flex, se comporta como texto (inline) pero permite usar Flexbox para alinear iconos y texto internamente
+   - align-items: center, es decir, centra verticalmente el contenido dentro del badge
+   - gap: 0.5rem, separación entre icono y texto (mejor que margin individual)
+   - padding y border-radius grande, se busca un aspecto tipo "pill" o pildora
+   - font-weight y font-size controlan jerarquía visual
+   - color: white, implica texto en blanco*/
 .badge {
   display: inline-flex;
   align-items: center;
@@ -262,41 +272,49 @@ a.link:hover {
   font-size: 0.8rem;
   color: white;
 }
+
+/*variantes de color para diferentes estados*/
 .badge-new {
-  background: #94a3b8;
+  background: #94a3b8; /*gris azulado suave, se usará para nuevo, neutral */
 }
 .badge-progress {
-  background: #f59e0b;
+  background: #f59e0b; /*naranja, se usará para en progreso*/
 }
 .badge-closed {
-  background: #ef4444;
+  background: #ef4444; /*rojo, se usará para cerrado, error */
 }
 .badge-done {
-  background: #10b981;
+  background: #10b981; /*verde, se usará para completado, éxito */
 }
 
-/* toasts */
+/* toasts (notificaciones temporales)*/
+/* - toast-wrap: contenedor fijo en esquina superior derecha
+   - display con flex Y flex-direction:column Y gap:8px apila toasts verticalmente
+   - z-index, con valor alto, para sobreponer contenido*/
 .toast-wrap {
-  position: fixed;
+  position: fixed; /*fija la posición respecto a la ventana */
   top: 16px;
   right: 16px;
-  z-index: 9999;
+  z-index: 9999; /*valor super alto, es decir, encima de casi todos los demás elementos */
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 8px; /*separación entre toasts */
 }
+/*toast: estilos visuales (sombra, padding, min/max width, align-items)
+  para que siempre se muestre correctamente en pantallas pequeñas y grandes*/
 .toast {
-  min-width: 220px;
-  max-width: 420px;
+  min-width: 220px; /*mínimo ancho legible */
+  max-width: 420px; /*evita toasts excesivamente anchos en pantallas grandes */
   padding: 0.75rem 1rem;
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.08);
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.08); /*sombra suave para separación del fondo */
   color: white;
   font-weight: 600;
-  display: flex;
+  display: flex; /*para alinear icono y el texto */
   align-items: center;
   gap: 10px;
 }
+/*toast-success y toast-error, fondos en gradiente para impacto visual*/
 .toast-success {
   background: linear-gradient(90deg, #16a34a, #10b981);
 }
@@ -304,7 +322,7 @@ a.link:hover {
   background: linear-gradient(90deg, #ef4444, #f97316);
 }
 
-/* advertencia inline */
+/*advertencia inline */
 .warn {
   color: #b45309;
   background: #fff7ed;
@@ -315,7 +333,7 @@ a.link:hover {
   font-size: 0.9rem;
 }
 
-/* ---------- MODAL (overlay + caja) ---------- */
+/*modal (overlay y caja)*/
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -339,7 +357,7 @@ a.link:hover {
   padding: 1rem 1.25rem;
 }
 
-/* modal header */
+/*modal header */
 .modal-header {
   display: flex;
   align-items: center;
@@ -349,12 +367,15 @@ a.link:hover {
   border-bottom: 1px solid rgba(2,6,23,0.04);
 }
 
-/* modal body spacing */
+/*espaciado del cuerpo de los modales */
 .modal-body {
   padding-top: 1rem;
 }
 
-/* close button */
+/*clase para los botones de cerrar el modal*/
+/* - .modal-close: estilo visual de botón (sin fondo por defecto)
+   - cursor: pointer para indicar interactividad
+   - hover: efecto visual (ligero fondo, elevación con translateY)*/
 .modal-close {
   background: transparent;
   border: none;
@@ -363,20 +384,23 @@ a.link:hover {
   padding: .35rem;
   border-radius: 8px;
 }
+/*hover: feedback visual*/
 .modal-close:hover { background: rgba(2,6,23,0.04); transform: translateY(-2px); }
 
-/* ensure task list inside modal fits nicely */
+/*   contenido de tareas dentro del modal:
+   - .modal-tasks: display grid con gap para listas compactas y ordenadas
+   - mejora la legibilidad dentro del modal y separa elementos con espacio consistente*/
 .modal-tasks { display: grid; gap: .75rem; margin-top: .75rem; }
 
-/* keep consistent small buttons inside modal tasks */
+/*    ajustes puntuales para elementos dentro de modal:
+   - .modal .btn-sm: botones pequeños dentro del modal (tamaño y padding reducido)*/
 .modal .btn-sm { font-size: .85rem; padding: .35rem .5rem; }
 
-/* make the progress bar a little taller in modal */
+/*.modal .progress-track: incremento de altura para mejor interacción táctil*/
 .modal .progress-track { height: 14px; border-radius: 10px; }
 
-/* small responsive tweak */
+/*tweak: pequeño ajuste o modificación que se realiza a las clases de utilidad predefinidas o a las propiedades del sistema de diseño para personalizar el aspecto de los elementos de la interfaz de usuario, como colores, tamaños o espaciados, para que se ajusten mejor a los requisitos específicos de un proyecto*/
+/*pequeño tweak responsivo: en pantallas de resolución menor o igual a 640px (sm breakpoint en Tailwind), ajusta padding y max-width del modal content para ocupar mayor porcentaje de pantalla y evitar overflow horizontal*/
 @media (max-width: 640px) {
   .modal-content { padding: .75rem; max-width: 100%; }
 }
-
-
