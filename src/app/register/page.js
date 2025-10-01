@@ -11,6 +11,8 @@ export default function RegisterPage() {
   const router = useRouter();
   //estado del formulario: controlado por React
   //los campos: name, email, password y role (por defecto 'usuario')
+  //const [valor, setValor] = useState(estadoInicial)
+  //variable de estado, función para actualizarla
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'usuario' });
   //estado para mensajes de error (cadena). Si no hay error, entonces una cadena vacía
   const [error, setError] = useState('');
@@ -59,6 +61,11 @@ export default function RegisterPage() {
           {/*clase que define el contenedor principal del contenido de una tarjeta (padding interno, fondo, border-radius, sombra ligera, etc.)*/}
           <div className="card-body">
             <div className="form-wrap">
+              {/*fragmento que usa renderizado condicional en JSX para mostrar un mensaje de error sólo cuando hay un valor “truthy” en la variable error
+              Es una expresión JavaScript. Evalúa el operador &&:
+              Si error es falsy (false, null, undefined, '' (cadena vacía), NaN), el resultado de la expresión es ese valor falsy y React no renderiza nada (React ignora false, null, undefined)
+              Si error es truthy (por ejemplo una cadena no vacía), el resultado es el operando derecho (es decir el <div>...</div>) y React renderiza ese div 
+              En el <div>, {error} inserta el valor de la variable error en el contenido del div. Si error es una cadena se mostrará tal cual lo que tenga*/}
               {error && <div className="text-sm text-red-700 bg-red-50 p-2 rounded mb-3">{error}</div>}
 
               {/*utilidad de tailwind que aplica un margin-top de una cantidad determinada (3rem) a cada hijo vertical del contenedor excepto el primero, creando un espaciado uniforme entre ellos*/}

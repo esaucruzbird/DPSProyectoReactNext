@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const [projects, setProjects] = useState([]);
+  //declaración del estado del modal que controla si hay un modal abierto y cuál proyecto muestra
   const [modalProject, setModalProject] = useState(null);
 
   const [projForm, setProjForm] = useState({ id: null, title: '', description: '', startDate: '', endDate: '' });
@@ -45,26 +46,39 @@ export default function DashboardPage() {
   const [usersList, setUsersList] = useState([]);
   const [toasts, setToasts] = useState([]);
 
+  //Define un efecto que se ejecuta cuando cambia la dependencia loaded. useEffect corre después del render
   useEffect(() => {
+    //comprueba si la autenticación/carga de datos no está lista (loaded viene de useRequireAuth())si aún no está lista, sale del efecto sin hacer nada. Evita leer datos antes de que el contexto de auth esté preparado
     if (!loaded) return;
+    //llama a la función mockGetProjects() (API mock local) y actualiza el estado projects con el arreglo devuelto. Esto carga la lista de proyectos en memoria del componente
     setProjects(mockGetProjects());
+    //llama a mockListUsers() y guarda el resultado en usersList (lista de usuarios para selects y asignaciones)
     setUsersList(mockListUsers());
   }, [loaded]);
 
   function refresh() {
+    //recupera la lista actualizada de proyectos y la guarda en projects, para después de crear o editar o eliminar
     setProjects(mockGetProjects());
+    //comprueba si actualmente hay un modal abierto, en ese caso hay que actualizar también el objeto modalProject por si el proyecto abrió el modal y este fue modificado
     if (modalProject) {
+      //vuelve a obtener la lista de proyectos y busca el proyecto con la misma id que el modal actual. Si no existe (porque fue eliminado), updated será null
       const updated = mockGetProjects().find((p) => p.id === modalProject.id) || null;
+      //actualiza el estado modalProject con el proyecto actualizado (o null si ya no existe). Esto mantiene sincronizada la vista del modal con los datos actuales
       setModalProject(updated);
     }
   }
 
+  //declara la función que crea un toast (mensaje temporal). Recibe lo que trae message, type (por defecto 'success') y timeout en ms (3500 ms por defecto)
   function pushToast(message, type = 'success', timeout = 3500) {
+    //genera un identificador único (suficientemente único para este uso) combinado de timestamp con número aleatorio para poder identificar y eliminar ese toast después
     const id = Date.now() + Math.random();
+    //actualiza el estado toasts añadiendo el nuevo toast al array
     setToasts((t) => [...t, { id, message, type }]);
+    //programa la eliminación automática del toast tras timeout milisegundos, filtra el array toasts y elimina el que tenga el id generado
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), timeout);
   }
 
+  //=operador de encadenamiento opcional: intenta acceder a user.id sin lanzar error si user es undefined o null, si user no existe, user?.id resulta undefined. Por tanto, se agrega ?? null operador nulo: si user?.id es undefined o null, asigna null. Es decir, asegura que userId sea un valor definido (número o null) en lugar de "undefined"
   const userId = user?.id ?? null;
 
   // PROJECT CRUD
@@ -123,6 +137,7 @@ export default function DashboardPage() {
   };
 
   // TASKS CRUD
+  //abre el modal y prepara taskForm para creación
   const openNewTaskFor = (projectId) => {
     setTaskError('');
     setTaskForm({ id: null, name: '', description: '', assignedDays: 1, assignedTo: null, status: STATUS_OPTIONS[0], projectId });
@@ -130,6 +145,7 @@ export default function DashboardPage() {
     if (p) setModalProject(p);
   };
 
+  ////abre el modal y prepara taskForm para modificación
   const openEditTask = (projectId, task) => {
     setTaskError('');
     setTaskForm({
@@ -197,11 +213,14 @@ export default function DashboardPage() {
   };
 
   // Modal helpers
+  //función para abrir modal
   const openModal = (project) => {
     setModalProject(project);
   };
+  //función para cerrar modal
   const closeModal = () => {
     setModalProject(null);
+    //reseteando los campos del formulario para las tareas
     setTaskForm({ id: null, name: '', description: '', assignedDays: 1, assignedTo: null, status: STATUS_OPTIONS[0], projectId: null });
   };
 
@@ -224,6 +243,7 @@ export default function DashboardPage() {
 
   if (!loaded) return null;
 
+  //si no se cumple lo de ser rol gerente solo verá proyectos que le correspondan, se filtra por id
   const visibleProjects =
     user?.role === 'gerente' ? projects : userId ? projects.filter((p) => (p.tasks || []).some((t) => t.assignedTo === userId)) : [];
 
@@ -259,7 +279,8 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {/* Project create/edit (gerente) */}
+        {/* Project create o edit (gerente)
+        este bloque para crear o editar proyecto solo aparece si role === 'gerente'*/}
         {user?.role === 'gerente' && (
           <div className="card project-card mb-6">
             <div className="card-header form-wrap">
@@ -337,6 +358,7 @@ export default function DashboardPage() {
         <div className="space-y-4">
           {visibleProjects.length === 0 ? <div className="text-sm text-[var(--muted)]">No hay proyectos visibles.</div> : null}
 
+          {/*Se obtiene available por mockProjectDaysInfo, se suma assignedDays de tareas con status === 'Completado', se calcula porcentaje y se aplica al ancho style.width */}
           {visibleProjects.map((p) => {
             const daysInfo = mockProjectDaysInfo(p);
             const available = daysInfo.available;
@@ -363,6 +385,7 @@ export default function DashboardPage() {
                       style={{ marginTop: 8, width: '100%', background: 'rgba(2,6,23,0.06)', borderRadius: 8, height: 12 }}
                       className="progress-track"
                     >
+                      
                       <div
                         style={{
                           width: `${safePercent}%`,
@@ -379,6 +402,7 @@ export default function DashboardPage() {
                   </div>
 
                   <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center' }}>
+                    {/*botón para abrir el modal en la lista de proyectos*/}
                     <button className="btn btn-open" onClick={() => openModal(p)}>
                       Abrir
                     </button>
@@ -401,7 +425,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* MODAL: project + tasks */}
+      {/* MODAL: project y tasks
+      modal se muestra solo cuando modalProject no es null*/}
       {modalProject && (
         <div
           className="modal-overlay"
@@ -438,6 +463,7 @@ export default function DashboardPage() {
                     style={{ marginTop: 8, width: '100%', background: 'rgba(2,6,23,0.06)', borderRadius: 8, height: 14 }}
                     className="progress-track"
                   >
+                    {/*Se obtiene available por mockProjectDaysInfo, se suma assignedDays de tareas con status === 'Completado', se calcula porcentaje y se aplica al ancho style.width */}
                     <div
                       style={{
                         width: `${
@@ -571,6 +597,7 @@ export default function DashboardPage() {
                   if (String(t.status) === 'Cerrado') badgeClass = 'badge-closed';
                   if (String(t.status) === 'Completado') badgeClass = 'badge-done';
 
+                  //ayuda para cuales tareas si deben mostrarse a X usuarios en funcion de su id
                   const userIsAssignedHere = t.assignedTo === userId;
                   const isEditingThis = taskForm.id === t.id;
 
@@ -674,6 +701,7 @@ export default function DashboardPage() {
                           </div>
 
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem', alignItems: 'flex-end', minWidth: 120 }}>
+                            {/*si user.role === 'usuario' y está asignado, se le muestra un <select> para cambiar estado (solo donde salga el por funcion)*/}
                             {user?.role === 'usuario' && userIsAssignedHere && (
                               <select
                                 className="input"
